@@ -10,6 +10,9 @@ import {
 } from "./styles";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
+import { api } from "../../lib/axios";
+import { useContext } from "react";
+import { TransactionContext } from "../../contexts/TransactionsContext";
 
 const newTransactionsFormSchema = z.object({
   description: z.string(),
@@ -21,21 +24,29 @@ const newTransactionsFormSchema = z.object({
 type NewTransactionFormInputs = z.infer<typeof newTransactionsFormSchema>;
 
 export function NewTransactionsModal() {
+  const { createTransaction } = useContext(TransactionContext)
   const {
     control,
     register,
     handleSubmit,
     formState: { isSubmitting },
+    reset,
   } = useForm<NewTransactionFormInputs>({
     resolver: zodResolver(newTransactionsFormSchema),
     defaultValues: {
-      type: "income"
-    }
+      type: "income",
+    },
   });
 
   async function handleCreateNewTransaction(data: NewTransactionFormInputs) {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    console.log(data);
+    const { category, price, description, type } = data;
+   await createTransaction({
+    description,
+    price,
+    category,
+    type,
+   });
+    reset();
   }
 
   return (
@@ -72,7 +83,10 @@ export function NewTransactionsModal() {
             name="type"
             render={({ field }) => {
               return (
-                <TransactionType onValueChange={field.onChange} value={field.value}>
+                <TransactionType
+                  onValueChange={field.onChange}
+                  value={field.value}
+                >
                   <TransactionTypeButton variant="income" value="income">
                     <ArrowCircleUp size={24} />
                     Entrada
